@@ -2,8 +2,12 @@
   <iq:application entry="WatchFaceApp" id="a3421fee-1234-1234-1234-a3421fee0001" name="@Strings.AppName" launcherIcon="@Drawables.LauncherIcon" type="watchface" minApiLevel="3.2.0">
     <iq:products>
       <iq:product id="fenix847mm"/>
+      <iq:product id="fenix8solar51mm"/>
     </iq:products>
     <iq:permissions>
+      <iq:uses-permission id="Background"/>
+<iq:uses-permission id="Sensor"/>
+      <iq:uses-permission id="SensorHistory"/>
     </iq:permissions>
     <iq:languages>
       <iq:language>eng</iq:language>

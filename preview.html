@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pip-Boy Watch Face — Fenix 8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pip:      #3dff6e;
+    --pip-dim:  #1a8c35;
+    --pip-glow: rgba(61,255,110,0.55);
+    --pip-soft: rgba(61,255,110,0.18);
+    --bg:       #010804;
+  }
+
+  body {
+    background: #050a05;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  /* BEZEL */
+  .bezel {
+    display: contents;
+  }
+
+  .screw { display: none; }
+
+  /* FACE */
+  .face {
+    position: relative;
+    width: 424px;
+    height: 424px;
+    border-radius: 50%;
+    background: var(--bg);
+    overflow: hidden;
+    border: 1px solid rgba(61,255,110,0.12);
+    box-shadow:
+      inset 0 0 40px rgba(0,20,5,0.9),
+      inset 0 0 80px rgba(0,0,0,0.6);
+    animation: flicker 10s infinite;
+  }
+
+  /* Radial grid */
+  .face::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%,
+        transparent 29%,
+        rgba(61,255,110,0.02) 30%,
+        transparent 31%,
+        transparent 49%,
+        rgba(61,255,110,0.02) 50%,
+        transparent 51%,
+        transparent 69%,
+        rgba(61,255,110,0.02) 70%,
+        transparent 71%
+      );
+    pointer-events: none;
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,0,0,0.10) 2px,
+      rgba(0,0,0,0.10) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Scan sweep */
+  .sweep {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 40%,
+      rgba(61,255,110,0.045) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    animation: sweep 8s linear infinite;
+    pointer-events: none;
+    z-index: 9;
+  }
+
+  /* Corner brackets */
+  .bracket {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: var(--pip);
+    border-style: solid;
+    border-width: 0;
+    opacity: 0.28;
+  }
+  .bracket-tl { top: 28px; left: 28px; border-top-width: 2px; border-left-width: 2px; }
+  .bracket-tr { top: 28px; right: 28px; border-top-width: 2px; border-right-width: 2px; }
+  .bracket-bl { bottom: 28px; left: 28px; border-bottom-width: 2px; border-left-width: 2px; }
+  .bracket-br { bottom: 28px; right: 28px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  .inner-ring {
+    position: absolute;
+    inset: 21px;
+    border-radius: 50%;
+    border: 1px solid rgba(61,255,110,0.08);
+    pointer-events: none;
+  }
+
+  /* CONTENT */
+  .content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 38px 26px 28px;
+  }
+
+  /* ZONE 1 — DATE */
+  .date-bar {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: rgba(61,255,110,0.55);
+    text-shadow: 0 0 8px var(--pip-glow), 0 0 20px rgba(61,255,110,0.2);
+    text-transform: uppercase;
+    margin-top: 4px;
+    white-space: nowrap;
+  }
+
+  /* MAIN ROW */
+  .main {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    gap: 0;
+    margin-top: 10px;
+    align-items: center;
+  }
+
+  /* ZONE 2 — S.P.E.C.I.A.L. */
+  .special {
+    width: 154px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-left: 5%;
+  }
+
+  .row { display: flex; flex-direction: column; gap: 3px; }
+
+  .row-top {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .row-letter { display: none; }
+
+  .row-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: rgba(61,255,110,0.65);
+    letter-spacing: 1px;
+    flex: 1;
+    text-align: left;
+  }
+
+  .row-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--pip);
+    text-shadow: 0 0 6px var(--pip-glow);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .bar-track {
+    height: 5px;
+    border-radius: 2px;
+    background: rgba(61,255,110,0.07);
+    overflow: hidden;
+    margin-left: 0;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--pip-dim), var(--pip));
+    box-shadow: 0 0 6px var(--pip-glow);
+  }
+
+  /* Divider */
+  .divider {
+    width: 1px;
+    align-self: stretch;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(61,255,110,0.18) 20%,
+      rgba(61,255,110,0.28) 50%,
+      rgba(61,255,110,0.18) 80%,
+      transparent 100%
+    );
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
+  /* ZONE 3 — CLOCK */
+  .clock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 10px;
+    padding-right: 0;
+  }
+
+  .hours {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 126px;
+    line-height: 0.88;
+    color: var(--pip);
+    text-shadow:
+      0 0 10px var(--pip),
+      0 0 30px var(--pip-glow),
+      0 0 60px rgba(61,255,110,0.25);
+    letter-spacing: -2px;
+  }
+
+  .mid-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 28px;
+    margin: 6px 0;
+  }
+
+  .mid-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--pip-dim), var(--pip));
+    box-shadow: 0 0 6px var(--pip-glow);
+  }
+
+  .sec-block {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .sec-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: rgba(61,255,110,0.45);
+    letter-spacing: 2px;
+  }
+
+  .sec-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 30px;
+    color: rgba(61,255,110,0.8);
+    text-shadow: 0 0 8px var(--pip-glow);
+    line-height: 1;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .minutes {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 114px;
+    line-height: 0.88;
+    color: rgba(61,255,110,0.72);
+    text-shadow:
+      0 0 8px rgba(61,255,110,0.5),
+      0 0 24px rgba(61,255,110,0.2);
+    letter-spacing: -2px;
+  }
+
+  /* ZONE 4 — BOTTOM STATS */
+  .bottom {
+    width: 70%;
+    display: flex;
+    margin-top: 8px;
+    border-top: 1px solid rgba(61,255,110,0.10);
+    padding-top: 6px;
+  }
+
+  .stat-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .stat-col + .stat-col {
+    border-left: 1px solid rgba(61,255,110,0.12);
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 7px;
+    color: rgba(61,255,110,0.35);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--pip);
+    text-shadow: 0 0 8px var(--pip-glow);
+    line-height: 1;
+  }
+
+  .stat-unit {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 6px;
+    color: rgba(61,255,110,0.22);
+    letter-spacing: 1px;
+  }
+
+  /* ANIMATIONS */
+  @keyframes flicker {
+    0%,91%,95%,100% { opacity: 1; }
+    92%              { opacity: 0.93; }
+    93%              { opacity: 1; }
+    94%              { opacity: 0.96; }
+    96%              { opacity: 0.91; }
+    97%              { opacity: 1; }
+  }
+
+  @keyframes sweep {
+    0%   { transform: translateY(-110%); }
+    100% { transform: translateY(110%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="bezel">
+  <div class="screw screw-tl"></div>
+  <div class="screw screw-tr"></div>
+  <div class="screw screw-bl"></div>
+  <div class="screw screw-br"></div>
+
+  <div class="face">
+    <div class="scanlines"></div>
+    <div class="sweep"></div>
+    <div class="bracket bracket-tl"></div>
+    <div class="bracket bracket-tr"></div>
+    <div class="bracket bracket-bl"></div>
+    <div class="bracket bracket-br"></div>
+    <div class="inner-ring"></div>
+
+    <div class="content">
+
+      <!-- ZONE 1: DATE -->
+      <div class="date-bar" id="date-bar">MON &middot; 09 &middot; MAR &middot; 2026</div>
+
+      <div class="main">
+
+        <!-- ZONE 2: S.P.E.C.I.A.L. -->
+        <div class="special">
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">S</span>
+              <span class="row-label">PWR</span>
+              <span class="row-value">210W</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:62%"></div></div>
+          </div>
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">P</span>
+              <span class="row-label">GPS</span>
+              <span class="row-value">&#177;2m</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:88%"></div></div>
+          </div>
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">E</span>
+              <span class="row-label">BATT</span>
+              <span class="row-value" id="batt-val">82</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="batt-bar" style="width:82%"></div></div>
+          </div>
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">C</span>
+              <span class="row-label">STR</span>
+              <span class="row-value">24%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:24%"></div></div>
+          </div>
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">I</span>
+              <span class="row-label">HRV</span>
+              <span class="row-value" id="hrv-val">68ms</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:70%"></div></div>
+          </div>
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">A</span>
+              <span class="row-label">CDN</span>
+              <span class="row-value">174</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:95%"></div></div>
+          </div>
+
+          <div class="row">
+            <div class="row-top">
+              <span class="row-letter">L</span>
+              <span class="row-label">SPO2</span>
+              <span class="row-value">98%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:98%"></div></div>
+          </div>
+
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ZONE 3: CLOCK -->
+        <div class="clock">
+          <div class="hours" id="hours" style="margin-left:10%;">10</div>
+          <div class="mid-row">
+            <div class="mid-line"></div>
+            <div class="sec-block">
+              <span class="sec-label">SEC</span>
+              <span class="sec-value" id="seconds">38</span>
+            </div>
+          </div>
+          <div class="minutes" id="minutes" style="margin-left:10%;">59</div>
+        </div>
+
+      </div>
+
+      <!-- ZONE 4: BOTTOM STATS -->
+      <div class="bottom">
+        <div class="stat-col">
+          <div class="stat-label">Steps</div>
+          <div class="stat-value">8 412</div>
+          <div class="stat-unit">count</div>
+        </div>
+        <div class="stat-col">
+          <div class="stat-label">Kcal</div>
+          <div class="stat-value">1 847</div>
+          <div class="stat-unit">kcal</div>
+        </div>
+        <div class="stat-col">
+          <div class="stat-label">Dist</div>
+          <div class="stat-value">6.2</div>
+          <div class="stat-unit">km</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  let hrv = 68;
+
+  function update() {
+    const now = new Date();
+    document.getElementById('hours').textContent   = pad(now.getHours());
+    document.getElementById('minutes').textContent = pad(now.getMinutes());
+    document.getElementById('seconds').textContent = pad(now.getSeconds());
+
+    const day = DAYS[now.getDay()];
+    const dd  = pad(now.getDate());
+    const mon = MONTHS[now.getMonth()];
+    const yr  = now.getFullYear();
+    document.getElementById('date-bar').innerHTML =
+      day + ' &middot; ' + dd + ' &middot; ' + mon + ' &middot; ' + yr;
+
+    hrv += Math.random() < 0.5 ? -1 : 1;
+    hrv = Math.max(55, Math.min(80, hrv));
+    document.getElementById('hrv-val').textContent = hrv + 'ms';
+  }
+
+  update();
+  setInterval(update, 1000);
+</script>
+</body>
+</html>
